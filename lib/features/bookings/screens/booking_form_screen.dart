@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../cars/models/car_model.dart';
+import '../models/booking_model.dart';
 
 class BookingFormScreen extends StatefulWidget {
   final CarModel car;
+  final void Function(BookingModel) onSubmit;
+  final VoidCallback onCancel;
 
-  const BookingFormScreen({super.key, required this.car});
+  const BookingFormScreen({
+    super.key,
+    required this.car,
+    required this.onSubmit,
+    required this.onCancel,
+  });
 
   @override
   _BookingFormScreenState createState() => _BookingFormScreenState();
@@ -24,72 +32,61 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   void _onConfirmTap() {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Booking confirmed for ${widget.car.name}'),
-        ),
+      final start = DateTime.parse(_startDateController.text);
+      final end = DateTime.parse(_endDateController.text);
+
+      final booking = BookingModel(
+        car: widget.car,
+        startDate: start,
+        endDate: end,
       );
-      Navigator.pop(context);
+
+      widget.onSubmit(booking);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking saved!')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Form'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Car: ${widget.car.name} (${widget.car.type}) - \$${widget.car.pricePerDay}/day',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Booking for ${widget.car.name}', style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 16),
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _startDateController,
+                  decoration: const InputDecoration(labelText: 'Start Date (YYYY-MM-DD)'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Please enter start date';
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _startDateController,
-                decoration: const InputDecoration(
-                  labelText: 'Start Date (YYYY-MM-DD)',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _endDateController,
+                  decoration: const InputDecoration(labelText: 'End Date (YYYY-MM-DD)'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Please enter end date';
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter start date';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _endDateController,
-                decoration: const InputDecoration(
-                  labelText: 'End Date (YYYY-MM-DD)',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter end date';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              ElevatedButton(
-                onPressed: _onConfirmTap,
-                child: const Text('Confirm Booking'),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: _onConfirmTap, child: const Text('Confirm Booking')),
+          const SizedBox(height: 12),
+          TextButton(onPressed: widget.onCancel, child: const Text('Cancel')),
+        ],
       ),
     );
   }
